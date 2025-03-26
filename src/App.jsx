@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableHead, TableRow, TableHeader, TableBody, TableCell } from "@/components/ui/table";
+import RateTrackerTable from "./components/ui/table";
 import { Label } from "@/components/ui/label";
 import Select from './components/ui/select';
 import './formStyle.css';
@@ -33,16 +33,16 @@ export default function RateTracker() {
   const [selectedRateByValue, setSelectedRateByValue] = useState('');
 
   const rateByOptions = [
-      { value: 'Shakeel Sab', label: 'Shakeel Sab' },
-      { value: 'Rafaqat Sab', label: 'Rafaqat Sab' },
-      { value: 'Lahore Sceitific Store', label: 'Lahore Sceitific Store' },
+    { value: 'Shakeel Sab', label: 'Shakeel Sab' },
+    { value: 'Rafaqat Sab', label: 'Rafaqat Sab' },
+    { value: 'Lahore Sceitific Store', label: 'Lahore Sceitific Store' },
   ];
 
   const [selectedTypeValue, setSelectedTypeValue] = useState('');
 
   const typeOptions = [
-      { value: 'Chemical', label: 'Chemical' },
-      { value: 'Glassware', label: 'Glassware' },
+    { value: 'Chemical', label: 'Chemical' },
+    { value: 'Glassware', label: 'Glassware' },
   ];
 
   const handleTypeChange = (event) => {
@@ -83,6 +83,25 @@ export default function RateTracker() {
     };
     reader.readAsArrayBuffer(file);
   };
+
+  const loadData = () => {
+    fetch('/rates')
+      .then((response) => response.json())
+      .then((data) => {
+        const formattedData = data.map((file, index) => ({
+          id: Date.now() + index,
+          name: file.name || "",
+          company: file.company || "",
+          packing: file.packing || "",
+          specification: file.specification || "",
+          rate: file.rate || "",
+          date: file.date || "",
+          rateBy: file.rateBy || "",
+        }));
+        setItems([...items, ...formattedData]);
+      })
+      .catch((error) => console.error('Error loading data:', error));
+  }
 
   return (
     <div className="p-4">
@@ -142,33 +161,11 @@ export default function RateTracker() {
 
       <Card>
         <CardContent>
-          <h2 className="text-xl font-bold mb-2">Recorded Rates</h2>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeader>Item</TableHeader>
-                <TableHeader>Company</TableHeader>
-                <TableHeader>Packing</TableHeader>
-                <TableHeader>Specification</TableHeader>
-                <TableHeader>Rate</TableHeader>
-                <TableHeader>Date</TableHeader>
-                <TableHeader>Rate By</TableHeader> 
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell>{item.company}</TableCell>
-                  <TableCell>{item.packing}</TableCell>
-                  <TableCell>{item.specification}</TableCell>
-                  <TableCell>{item.rate}</TableCell>
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell>{item.rateBy}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="p-4">
+          <h1 className="text-xl font-bold mb-4">Rate Tracker</h1>
+          <button onClick={loadData}>Load Data</button>
+          <RateTrackerTable items={items} />
+        </div>
         </CardContent>
       </Card>
     </div>

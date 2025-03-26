@@ -1,29 +1,70 @@
-import './table.css';
-export function Table({ children, className = "" }) {
-    return (
-      <table className={`table w-full border-collapse border border-gray-300 ${className}`}>
-        {children}
-      </table>
-    );
-  }
-  
-  export function TableHead({ children }) {
-    return <thead className="bg-gray-200">{children}</thead>;
-  }
-  
-  export function TableRow({ children }) {
-    return <tr className="border-b border-gray-300">{children}</tr>;
-  }
-  
-  export function TableHeader({ children }) {
-    return <th className="p-2 text-left font-semibold border border-gray-300">{children}</th>;
-  }
-  
-  export function TableBody({ children }) {
-    return <tbody>{children}</tbody>;
-  }
-  
-  export function TableCell({ children }) {
-    return <td className="p-2 border border-gray-300">{children}</td>;
-  }
-  
+import React, { useState } from "react";
+import DataTable from "react-data-table-component";
+
+export default function RateTrackerTable({ items }) {
+  const columns = [
+    {
+      name: "Item",
+      selector: (row) => row.name,
+      sortable: true,
+    },
+    {
+      name: "Company",
+      selector: (row) => row.company,
+      sortable: true,
+    },
+    {
+      name: "Packing",
+      selector: (row) => row.packing,
+      sortable: true,
+    },
+    {
+      name: "Specification",
+      selector: (row) => row.specification,
+      sortable: true,
+    },
+    {
+      name: "Rate",
+      selector: (row) => row.rate,
+      sortable: true,
+    },
+    {
+      name: "Date",
+      selector: (row) => row.date,
+      sortable: true,
+    },
+    {
+      name: "Rate By",
+      selector: (row) => row.rateBy,
+      sortable: true,
+    },
+  ];
+
+  const [filterText, setFilterText] = useState("");
+
+  const filteredItems = items.filter((item) =>
+    Object.values(item)
+      .join(" ")
+      .toLowerCase()
+      .includes(filterText.toLowerCase())
+  );
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search..."
+        value={filterText}
+        onChange={(e) => setFilterText(e.target.value)}
+        className="p-2 border border-gray-300 rounded mb-4"
+      />
+      <DataTable
+        columns={columns}
+        data={filteredItems}
+        pagination
+        highlightOnHover
+        striped
+      />
+    </div>
+  );
+}
