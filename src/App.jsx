@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,15 @@ import { Input } from "@/components/ui/input";
 import RateTrackerTable from "./components/ui/table";
 import { Label } from "@/components/ui/label";
 import Select from './components/ui/select';
+import { Loading, LoadingOverlay } from "@/components/ui/loading";
+import { useApi } from './hooks/useApi';
 import './formStyle.css';
 
 export default function RateTracker() {
+  const { loading, error, clearError, getRates, downloadTemplate, addRate, uploadRatesFile } = useApi();
   const [items, setItems] = useState([]);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
   const [form, setForm] = useState({
     type: "",
     name: "",
@@ -21,13 +26,64 @@ export default function RateTracker() {
     rateBy: "",
   });
 
+  // Normalize backend rows to flat table-friendly shape
+  const toRow = (row, index) => ({
+    id: row.id || Date.now() + index,
+    name: row.item?.name || row.name || "",
+    company: row.packing?.company || row.company || "",
+    packing: row.packing?.packing || row.packing || "",
+    specification: row.packing?.specifications || row.specification || "",
+    rate: row.rate ?? "",
+    date: row.date ? new Date(row.date).toLocaleDateString() : "",
+    rateBy: row.rater?.name || row.rateBy || "",
+  });
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const addItem = () => {
-    setItems([...items, { ...form, id: Date.now() }]);
-    setForm({ name: "", company: "", packing: "", specification: "", rate: "", date: "" });
+  const addItem = async () => {
+    try {
+      // Prepare data for API call
+      const rateData = {
+        type: form.type,
+        name: form.name,
+        company: form.company,
+        packing: form.packing,
+        specifications: form.specification,
+        rate: parseFloat(form.rate) || 0,
+        date: form.date,
+        rater: form.rateBy
+      };
+
+      // Save to database
+      await addRate(rateData);
+      
+      // Show success message
+      setSuccessMessage('Rate saved successfully to database!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      
+      // Add to local state for immediate display
+      setItems([...items, { ...form, id: Date.now() }]);
+      
+      // Clear form
+      setForm({ type: "", name: "", company: "", packing: "", specification: "", rate: "", date: "", rateBy: "" });
+      setSelectedTypeValue('');
+      setSelectedRateByValue('');
+      
+      // Reload data from database to ensure consistency
+      const dbData = await getRates();
+      if (dbData && dbData.items) {
+        setItems(dbData.items.map(toRow));
+      }
+    } catch (error) {
+      console.error('Error adding rate:', error);
+      // Still add to local state even if API fails
+      setItems([...items, { ...form, id: Date.now() }]);
+      setForm({ type: "", name: "", company: "", packing: "", specification: "", rate: "", date: "", rateBy: "" });
+      setSelectedTypeValue('');
+      setSelectedRateByValue('');
+    }
   };
 
   const [selectedRateByValue, setSelectedRateByValue] = useState('');
@@ -55,58 +111,90 @@ export default function RateTracker() {
     setForm({ ...form, rateBy: event.target.value });
   };
 
-  // Function to handle Excel upload
-  const handleFileUpload = (event) => {
+  // Load data automatically on component mount
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setInitialLoad(true);
+        const data = await getRates();
+        if (data && data.items) {
+          setItems(data.items.map(toRow));
+        }
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        // Don't show error for initial load, just log it
+      } finally {
+        setInitialLoad(false);
+      }
+    };
+
+    loadInitialData();
+  }, [getRates]);
+
+  // Function to handle Excel upload (send to backend)
+  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0]; // Read first sheet
-      const sheet = workbook.Sheets[sheetName];
-      const parsedData = XLSX.utils.sheet_to_json(sheet);
-
-      const formattedData = parsedData.map((row, index) => ({
-        id: Date.now() + index,
-        name: row["Item Name"] || "",
-        company: row["Company"] || "",
-        packing: row["Packing"] || "",
-        specification: row["Specification"] || "",
-        rate: row["Rate"] || "",
-        date: row["Date"] || "",
-        rateBy: row["Rate By"] || "",
-      }));
-
-      setItems([...items, ...formattedData]);
-    };
-    reader.readAsArrayBuffer(file);
+    try {
+      await uploadRatesFile(file);
+      // Reload data from database to ensure consistency
+      const dbData = await getRates();
+      if (dbData && dbData.items) {
+        setItems(dbData.items.map(toRow));
+      }
+      setSuccessMessage('File uploaded and processed successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      console.error('Error uploading file:', err);
+    }
   };
 
-  const loadData = () => {
-    fetch('/rates')
-      .then((response) => response.json())
-      .then((data) => {
-        const formattedData = data.map((file, index) => ({
-          id: Date.now() + index,
-          name: file.name || "",
-          company: file.company || "",
-          packing: file.packing || "",
-          specification: file.specification || "",
-          rate: file.rate || "",
-          date: file.date || "",
-          rateBy: file.rateBy || "",
-        }));
-        setItems([...items, ...formattedData]);
-      })
-      .catch((error) => console.error('Error loading data:', error));
-  }
+  const handleLoadData = async () => {
+    try {
+      const data = await getRates();
+      if (data && data.items) {
+        setItems([...items, ...data.items.map(toRow)]);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const blob = await downloadTemplate();
+      console.log('Blob size:', blob.size);
+      console.log('Blob type:', blob.type);
+      
+      if (blob.size === 0) {
+        throw new Error('Downloaded file is empty');
+      }
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rate_tracker_template.xlsx';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      alert(`Failed to download template: ${error.message}`);
+    }
+  };
 
   return (
-    <div className="p-4">
-      <Card className="p-4 mb-4">
-        <h2 className="text-xl font-bold mb-2">Add Item Rate</h2>
+    <div className="app-container">
+      <Card className="card-gradient">
+        <h2 className="form-title">Add Item Rate</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Item Type</Label>
@@ -154,17 +242,69 @@ export default function RateTracker() {
         <Button className="mt-4" onClick={addItem}>Add Rate</Button>
       </Card>
 
-      <Card className="p-4 mb-4">
-        <h2 className="text-xl font-bold mb-2">Upload Excel File</h2>
+      <Card className="card-elevated">
+        <h2 className="form-title">Upload Excel File</h2>
         <Input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
       </Card>
 
-      <Card>
+      <Card className="card-flat">
         <CardContent>
-          <div className="p-4">
-          <h1 className="text-xl font-bold mb-4">Rate Tracker</h1>
-          <button onClick={loadData}>Load Data</button>
-          <RateTrackerTable items={items} />
+          <div className="p-6">
+          <h1 className="main-title">Rate Tracker</h1>
+          
+          {/* Error Display */}
+          {error && (
+            <div className="error-message">
+              <div className="flex justify-between items-center">
+                <span>{error}</span>
+                <button onClick={clearError} className="error-close">
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Success Display */}
+          {successMessage && (
+            <div className="success-message">
+              <div className="flex justify-between items-center">
+                <span>{successMessage}</span>
+                <button onClick={() => setSuccessMessage('')} className="error-close">
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <div className="button-group">
+            <Button 
+              onClick={handleLoadData} 
+              disabled={loading || initialLoad}
+              className="button-primary"
+            >
+              {(loading || initialLoad) && <Loading size="sm" text="" />}
+              {initialLoad ? 'Loading...' : 'Load More Data'}
+            </Button>
+            <Button 
+              onClick={handleDownloadTemplate} 
+              disabled={loading || initialLoad}
+              className="button-secondary"
+            >
+              {loading && <Loading size="sm" text="" />}
+              Download Template
+            </Button>
+          </div>
+          
+          <LoadingOverlay isLoading={loading || initialLoad}>
+            {items.length === 0 && !initialLoad ? (
+              <div className="empty-state">
+                <h3>No Data Available</h3>
+                <p>No rates have been loaded yet. Use the "Load More Data" button to fetch data from the database, or upload an Excel file.</p>
+              </div>
+            ) : (
+              <RateTrackerTable items={items} />
+            )}
+          </LoadingOverlay>
         </div>
         </CardContent>
       </Card>

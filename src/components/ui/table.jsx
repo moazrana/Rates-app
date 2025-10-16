@@ -56,7 +56,7 @@ export default function RateTrackerTable({ items }) {
         placeholder="Search..."
         value={filterText}
         onChange={(e) => setFilterText(e.target.value)}
-        className="p-2 border border-gray-300 rounded mb-4"
+        className="search-input"
       />
       <DataTable
         columns={columns}
