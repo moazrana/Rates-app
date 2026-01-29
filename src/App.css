@@ -1,8 +1,8 @@
 #root {
-  max-width: 1280px;
+  /* max-width: 1280px; */
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  /* padding: 2rem; */
+  /* text-align: center; */
 }
 
 .logo {
@@ -40,4 +40,165 @@
 .read-the-docs {
   color: #888;
 }
- 
+.invoice-status-text {
+  color: red;
+  font-size: x-large;
+  font-weight: bold;
+  text-align: left;
+}
+
+.invoice-error-text {
+  color: #4a5568; /* dark gray */
+  font-size: medium;
+  text-align: left;
+}
+
+.invoice-error-code {
+  color: #a0aec0; /* light gray */
+  font-size: small;
+  text-align: left;
+}
+.invoice-heading{
+  color: black;
+  font-size: x-large;
+  font-weight: bold;
+  text-align: left;
+}
+
+.invoice-status-card {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+.rate-details-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.rate-details-modal {
+  background: #ffffff;
+  padding: 1.5rem;
+  /* max-width: 910px; */
+  width: 95%;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  text-align: left;
+}
+
+.rate-details-title {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.rate-details-subtitle {
+  margin: 0.75rem 0 0.5rem;
+  font-weight: 600;
+}
+
+.rate-details-row {
+  margin-bottom: 0.25rem;
+}
+
+.rate-details-label {
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.rate-details-banned-flag {
+  color: #e53e3e;
+  font-weight: 700;
+}
+
+.rate-details-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  
+}
+
+.rate-details-section {
+  margin-top: 0.75rem;
+}
+
+.rate-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.rate-details-table th,
+.rate-details-table td {
+  border: 1px solid #e2e8f0;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+}
+
+.rate-details-table th {
+  background-color: #f7fafc;
+  font-weight: 600;
+}
+
+.rate-details-small-button {
+  padding: 0.1rem 0.4rem;
+  font-size: small;
+  line-height: 1.1;
+  height: auto;
+}
+.edit-btns-div{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  width: 100%;
+  /* gap: 0.5rem; */
+}
+.rate-details-row{
+  display: flex;
+  flex-direction: row;
+
+  width: 100%;
+}
+.empty-div{
+  width: 100%;
+}
+
+/* Layout for top cards */
+.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.card-row-item {
+  flex: 1 1 260px;
+}
+
+.card-row-item-wide {
+  flex: 2 1 320px;
+}
+
+@media (max-width: 768px) {
+  .card-row {
+    flex-direction: column;
+  }
+}
+
+/* Make Add Item Rate card more compact and closer in height to the right column */
+.card-row-item-wide .card-gradient {
+  max-height: 520px;
+  overflow-y: auto;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+}
+
+.card-row-item-wide .card-gradient .grid {
+  row-gap: 0.75rem;
+}

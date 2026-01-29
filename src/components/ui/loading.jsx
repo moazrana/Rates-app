@@ -17,14 +17,14 @@ export const Loading = ({ size = 'md', text = 'Loading...' }) => {
 };
 
 export const LoadingOverlay = ({ isLoading, children }) => {
-  if (!isLoading) return children;
-
   return (
     <div className="loading-overlay">
       {children}
-      <div className="loading-backdrop">
-        <Loading size="lg" text="Loading..." />
-      </div>
+      {isLoading && (
+        <div className="loading-backdrop">
+          <Loading size="lg" text="Loading..." />
+        </div>
+      )}
     </div>
   );
 }; 

@@ -24,3 +24,41 @@
 .table tr:hover {
     background-color: #f1f1f1;
 }
+.edit-btn{
+  background: transparent;
+  color:darkgray;
+  border: none;
+  cursor: pointer;
+}
+
+.edit-btn:hover{
+  color: #000;
+  text-decoration: underline;
+  background:transparent
+}
+.edit-save-btn{
+    font-size: small;
+    padding:0;
+    color:green;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+.edit-save-btn:hover{
+    color: #000;
+    text-decoration: underline;
+    background:transparent
+}
+.edit-cancel-btn{
+    font-size: small;
+    padding:0;
+    color:red;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+.edit-cancel-btn:hover{
+    color: #000;
+    text-decoration: underline;
+    background:transparent
+}
