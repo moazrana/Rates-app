@@ -1,5 +1,7 @@
-[phases.build]
-cmds = ["npm run build"]
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build"
 
-[start]
-cmd = "npx serve -s dist -l $PORT"
+[deploy]
+startCommand = "npx serve -s dist -l $PORT"
+restartPolicyType = "on-failure"
