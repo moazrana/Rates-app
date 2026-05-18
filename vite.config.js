@@ -10,7 +10,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5174,
-    allowedHosts: ['nonattributively-archaistic-atlas.ngrok-free.dev'],
+    port: 5173
+    
   },
 })

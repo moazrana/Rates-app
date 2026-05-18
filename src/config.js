@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // API Configuration
-// Uses VITE_API_BASE_URL from .env file, falls back to localhost:8001
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
+// Uses VITE_API_BASE_URL from .env file, falls back to localhost:3000
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 // Create axios instance with default config
 export const apiClient = axios.create({
