@@ -44,7 +44,7 @@ class ApiService {
     }
   }
 
-  // Upload Excel file to backend for processing
+  // Upload Excel file — returns {jobId, message}
   async uploadRatesFile(file) {
     try {
       const formData = new FormData();
@@ -58,6 +58,16 @@ class ApiService {
     }
   }
 
+  // Poll upload-rates job status
+  async getUploadRatesJobStatus(jobId) {
+    try {
+      const response = await apiClient.get(`/rates/upload/job/${jobId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get upload-rates job status: ${error.message}`);
+    }
+  }
+
   // Add single rate (if you have this endpoint)
   async addRate(rateData) {
     try {
@@ -68,18 +78,156 @@ class ApiService {
     }
   }
 
-  // Fill rates in Excel file
+  // Submit fill-rates job (returns jobId immediately)
   async fillRatesInFile(file) {
     try {
       const formData = new FormData();
       formData.append('file', file);
       const response = await apiClient.post('/rates/fill-rates', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data; // { jobId, message }
+    } catch (error) {
+      throw new Error(`Failed to submit fill-rates job: ${error.message}`);
+    }
+  }
+
+  // Poll fill-rates job status
+  async getFillRatesJobStatus(jobId) {
+    try {
+      const response = await apiClient.get(`/rates/fill-rates/job/${jobId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get fill-rates job status: ${error.message}`);
+    }
+  }
+
+  // Download completed fill-rates result
+  async downloadFillRatesResult(jobId) {
+    try {
+      const response = await apiClient.get(`/rates/fill-rates/download/${jobId}`, {
         responseType: 'blob',
+        headers: { Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
       });
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fill rates in file: ${error.message}`);
+      throw new Error(`Failed to download fill-rates result: ${error.message}`);
+    }
+  }
+
+  // Download inventory template (inventory module)
+  async downloadInventoryTemplate() {
+    try {
+      const response = await apiClient.get('/inventory/template', {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to download inventory template: ${error.message}`);
+    }
+  }
+
+  // Upload inventory Excel file (inventory module)
+  async uploadInventoryFile(file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await apiClient.post('/inventory/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to upload inventory file: ${error.message}`);
+    }
+  }
+
+  // List all inventory records
+  async getInventory(search = '', page = 1, limit = 200) {
+    try {
+      const response = await apiClient.get('/inventory', { params: { search, page, limit } });
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to fetch inventory: ${error.message}`);
+    }
+  }
+
+  // Search packings for the add-item combobox
+  async searchInventoryPackings(search = '') {
+    try {
+      const response = await apiClient.get('/inventory/search-packings', { params: { search } });
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to search packings: ${error.message}`);
+    }
+  }
+
+  // ── Store CRUD ──────────────────────────────────────────────────────────────
+
+  async getStores() {
+    try {
+      const response = await apiClient.get('/stores');
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to fetch stores: ${error.message}`);
+    }
+  }
+
+  async createStore(name) {
+    try {
+      const response = await apiClient.post('/stores', { name });
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to create store: ${error.message}`);
+    }
+  }
+
+  async updateStore(id, name) {
+    try {
+      const response = await apiClient.patch(`/stores/${id}`, { name });
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to update store: ${error.message}`);
+    }
+  }
+
+  async deleteStore(id) {
+    try {
+      const response = await apiClient.delete(`/stores/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to delete store: ${error.message}`);
+    }
+  }
+
+  async addInventoryItem(data) {
+    try {
+      const response = await apiClient.post('/inventory', data);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to add inventory item: ${error.message}`);
+    }
+  }
+
+  // Update an inventory record (qty / store / shelf / box)
+  async updateInventoryItem(id, data) {
+    try {
+      const response = await apiClient.patch(`/inventory/${id}`, data);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to update inventory item: ${error.message}`);
+    }
+  }
+
+  // Delete an inventory record
+  async deleteInventoryItem(id) {
+    try {
+      const response = await apiClient.delete(`/inventory/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to delete inventory item: ${error.message}`);
     }
   }
 
@@ -137,6 +285,32 @@ class ApiService {
     }
   }
 
+  // Create sale rate for a packing
+  async createSaleRate(packingId, { date, rate }) {
+    try {
+      const response = await apiClient.post(
+        `/rates/packings/${packingId}/sale-rates`,
+        { date, rate },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to create sale rate: ${error.message}`);
+    }
+  }
+
+  // Update sale rate
+  async updateSaleRate(saleRateId, { date, rate }) {
+    try {
+      const response = await apiClient.patch(
+        `/rates/sale-rates/${saleRateId}`,
+        { date, rate },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to update sale rate: ${error.message}`);
+    }
+  }
+
   // Get all raters
   async getRaters() {
     try {
@@ -168,6 +342,24 @@ class ApiService {
       return response.data;
     } catch (error) {
       throw new Error(`Failed to update item: ${error.message}`);
+    }
+  }
+
+  // Get single quotation with items
+  async getQuotationById(id) {
+    try {
+      const response = await apiClient.get(`/rates/quotation/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to fetch quotation: ${error.message}`);
+    }
+  }
+
+  async updateQuotationItemInventory(itemId, usedFromInventory, sourceNote) {
+    try {
+      await apiClient.patch(`/rates/quotation-item/${itemId}/inventory`, { usedFromInventory, sourceNote });
+    } catch (error) {
+      throw new Error(`Failed to update item inventory info: ${error.message}`);
     }
   }
 
@@ -213,6 +405,55 @@ class ApiService {
     }
   }
 
+  // Create delivery challan for a quotation
+  async createDeliveryChallan(quotationId, challanData = {}) {
+    try {
+      const response = await apiClient.post(
+        `/rates/quotation/${quotationId}/delivery-challan`,
+        challanData,
+        {
+          responseType: 'blob',
+          headers: {
+            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to create delivery challan: ${error.message}`);
+    }
+  }
+
+  // Get delivery challans for a quotation
+  async getDeliveryChallansByQuotation(quotationId) {
+    try {
+      const response = await apiClient.get(
+        `/rates/quotation/${quotationId}/delivery-challans`,
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to fetch delivery challans: ${error.message}`);
+    }
+  }
+
+  // Download delivery challan by ID
+  async downloadDeliveryChallan(challanId) {
+    try {
+      const response = await apiClient.get(
+        `/rates/delivery-challan/${challanId}/download`,
+        {
+          responseType: 'blob',
+          headers: {
+            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          },
+        },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to download delivery challan: ${error.message}`);
+    }
+  }
+
   // Upload invoice file to FBR endpoint
   async uploadInvoice(file, description) {
     try {
@@ -244,6 +485,19 @@ class ApiService {
       return response.data;
     } catch (error) {
       throw new Error(`Failed to download FBR invoice template: ${error.message}`);
+    }
+  }
+
+  // Generate Bill & DC Excel
+  async generateBillAndDC(data) {
+    try {
+      const response = await apiClient.post('/rates/bill-and-dc', data, {
+        responseType: 'blob',
+        headers: { 'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to generate Bill & DC: ${error.message}`);
     }
   }
 
