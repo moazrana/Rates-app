@@ -13,6 +13,6 @@ export default defineConfig({
     port: 5173,
   },
   preview: {
-    allowedHosts: 'rates-app-production.up.railway.app',
+    allowedHosts: ['rates-app-production.up.railway.app'],
   },
 })
