@@ -12,6 +12,7 @@ import RateDetailsModal from "./components/ui/RateDetailsModal";
 import { Search, Download, ChevronUp, ChevronDown, X, Upload, CheckCircle2, AlertCircle, FileSpreadsheet } from 'lucide-react';
 
 export default function RateTracker() {
+  console.log('API URL:', import.meta.env.VITE_API_BASE_URL);
   const {
     loading, error, clearError,
     getRates, downloadTemplate, downloadFillRatesTemplate,
